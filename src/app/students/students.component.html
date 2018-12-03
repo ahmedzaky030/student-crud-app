@@ -1,0 +1,176 @@
+<div class="container">
+<div class="row">
+  
+  <div class="col-lg-6 form-group form-inline">
+    <input type="search" [(ngModel)]="query" (keypress)="enter($event)" class="col-lg-offset-5 col-lg-5 form-control" placeholder="search by student name" />
+    <button  class=" col-lg-3 btn btn-primary form\ "> Search</button>
+  </div>
+  <div class="row col-md-8 col-md-offset-2 custyle">
+  <table class="table table-striped custab">
+    <thead >
+      <a  (click)="openModal(newtemplate , false , 0)"  class="btn btn-primary btn-xs pull-right"><b>+</b> Add new students</a>
+      <tr>
+        <th >Id</th>
+        <th >Name</th>
+        <th >National No</th>
+        <th >Grade </th>
+        <th class="text-center">Actions </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let st of visibleStudents">
+        <th scope="row">{{st.id}}</th>
+        <td scope="row">{{st.fullName?.firstName }} {{st.fullName?.lastName }}</td>
+        <td >{{st.nationalNo}}</td>
+        <td>{{st.currentGrade?.gradeDescription}}</td>
+        <!-- <td scope="row"><span (click)="openDeleteModal(deletetemplate , st) " class="col-lg-4"> <i class="fa fa-trash"></i> Delete</span>
+          <span (click)="openModal(template ,  true , st.id)" class="col-lg-4"><i class="fa fa-pencil"></i>Edit</span>
+          <span (click)="openModal(template ,  false , st.id)" class="col-lg-4 btn"><i class="fa fa-eye"></i>View</span></td> -->
+      <td><a class='btn btn-info btn-xs' (click)="openModal(template ,  true , st.id)" ><span class="glyphicon glyphicon-edit"></span> Edit</a> <a (click)="openDeleteModal(deletetemplate , st)" class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-remove"></span> Del</a>
+        <a  (click)="openModal(template ,  false , st.id)" class="btn btn-warning btn-xs"><span class="glyphicon glyphicon-eye-open"></span> View</a>
+      </td>
+        </tr>
+    </tbody>
+  </table>
+  <pagination [totalItems]="12" [itemsPerPage]="6" (pageChanged)="pageChanged($event)" ></pagination>
+</div>
+</div>
+
+<ng-template #template>
+    <div class="modal-header">
+      <h4 class="modal-title pull-left">{{ isEditing ?  'Edit Student':'View Student'  }}</h4>
+      <button type="button" class="close pull-right" aria-label="Close" (click)="modalRef.hide()">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form [formGroup]="studentForm" >
+        <div formGroupName="fullName">
+        <div class="form-group">
+          <label>First Name</label>
+          <input class="form-control" [readonly]="!isEditing" formControlName="firstName" name="firstName" [(ngModel)]="selectedStudent.fullName.firstName" type="text" placeholder="please type first name"  >
+        </div>
+        <div class="form-group">
+            <label>Last Name</label>
+            <input class="form-control" [readonly]="!isEditing" formControlName="lastName" name="lastName" [(ngModel)]="selectedStudent.fullName.lastName"  type="text" placeholder="please type last name"  >
+          </div>
+        </div>
+        <div class="form-group">
+            <label>National No</label>
+            <input class="form-control" [readonly]="!isEditing" formControlName="nationalNo" type="text" [(ngModel)]="selectedStudent.nationalNo" placeholder="please type national no"  >
+          </div>
+          <div class="form-group">
+              <label>Date Of Birth</label>
+              <input class="form-control" [readonly]="!isEditing" formControlName="dateOfBirth" type="date" [(ngModel)]="selectedStudent.dateOfBirth" placeholder="please type national no"  >
+            </div>
+          <div class="form-group"  >
+              <label>Grade</label>
+              <select class="form-control"  formControlName="grade" [disabled]="!isEditing" [ngClass]="[!isEditing ? 'disable':'']" (change)="getClass($event.target.value)"  name="grade" [(ngModel)]="selectedStudent.currentGrade.id" >
+                <optgroup title="select Grade">
+                    <option *ngFor="let gr of grades"  [value]="gr.id">{{gr.gradeDescription}}</option>
+                  
+                  </optgroup>
+              </select>
+            </div>
+            <div class="form-group">
+                <label>Class</label>
+                <select class="form-control"  formControlName="class" name="class" [ngClass]="[!isEditing ? 'disable':'']" [disabled]="!isEditing"  [(ngModel)]="selectedStudent.currentClassRoom.id" >
+                    <optgroup title="select Class">
+                      <option *ngFor="let cl of classes"  [value]="cl.id">{{cl.classRoomName}}</option>
+                      
+                      </optgroup>
+                  </select>
+              </div>
+              <input type="hidden" formControlName="id" name="id" [(ngModel)]="selectedStudent.id"/>
+              
+
+      </form>
+      <input type="submit" (click)="submit(studentForm)" class="form-control btn btn-primary" *ngIf="isEditing"   value="Submit">
+    </div>
+
+  </ng-template>
+
+  <ng-template #newtemplate>
+      <div class="modal-header">
+        <h4 class="modal-title pull-left">Add New Student</h4>
+        <button type="button" class="close pull-right" aria-label="Close" (click)="modalRef.hide()">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="studentForm" >
+          <div formGroupName="fullName">
+          <div class="form-group">
+            <label>First Name</label>
+            <input class="form-control"  formControlName="firstName" name="firstName"  type="text" placeholder="please type first name"  >
+            <span class="alert-danger" *ngIf="(studentForm.controls.fullName.controls.firstName.errors?.required || studentForm.controls.fullName.controls.firstName.errors?.minlength ) && (studentForm.dirty || studentForm.touched)"> First name should be complete , No ABRV</span>
+          </div>
+          <div class="form-group">
+              <label>Last Name</label>
+              <input class="form-control"  formControlName="lastName" name="lastName"  type="text" placeholder="please type last name"  >
+              <span class="alert-danger" *ngIf="(studentForm.controls.fullName.controls.lastName.errors?.required || studentForm.controls.fullName.controls.lastName.errors?.minlength)   && (studentForm.dirty || studentForm.touched)"> Last name should be complete , No ABRV</span>
+            </div>
+          </div>
+          <div class="form-group">
+              <label>National No</label>
+              <input class="form-control"  formControlName="nationalNo" type="text"  placeholder="please type national no"  >
+              <span class="alert-danger" *ngIf="(studentForm.controls.nationalNo.errors?.maxlength || studentForm.controls.nationalNo.errors?.minlength ) && (studentForm.dirty || studentForm.touched)"> Please enter 10 digits number</span>
+              {{studentForm.controls.nationalNo.errors?.maxLength}}
+            </div>
+            <div class="form-group">
+                <label>Date Of Birth</label>
+                <input class="form-control" formControlName="dateOfBirth" max="Date()" type="date"  placeholder="please type national no"  >
+                <span class="alert-danger" *ngIf="studentForm.controls.dateOfBirth.errors?.futureValue && (studentForm.dirty || studentForm.touched)"> Please choose past time</span>
+                
+              </div>
+            <div class="form-group"  >
+                <label>Grade</label>
+                <select class="form-control"  formControlName="grade" (change)="getClass($event.target.value)"  name="grade"  >
+                  <optgroup title="select Grade">
+                      <option *ngFor="let gr of grades"  [value]="gr.id">{{gr.gradeDescription}}</option>
+                    
+                    </optgroup>
+                </select>
+                <span class="alert-danger" *ngIf="studentForm.controls.grade.errors?.required && (studentForm.dirty || studentForm.touched)"> Please choose Grade</span>
+              </div>
+              <div class="form-group">
+                  <label>Class</label>
+                  <select class="form-control"  formControlName="class" name="class"  >
+                      <optgroup title="select Class">
+                        <option *ngFor="let cl of classes"  [value]="cl.id">{{cl.classRoomName}}</option>
+                        
+                        </optgroup>
+                    </select>
+                    <span class="alert-danger" *ngIf="studentForm.controls.class.errors?.required && (studentForm.dirty || studentForm.touched)"> Please choose past time</span>
+                </div>
+              
+  
+        </form>
+        <input type="submit" (click)="submit(studentForm)" class="form-control btn btn-primary"   value="Submit">
+      </div>
+  
+    </ng-template>
+  <ng-template #deletetemplate>
+      <div class="modal-header">
+        <h4 class="modal-title pull-left">Delete </h4>
+        <button type="button" class="close pull-right" aria-label="Close" (click)="modalRef.hide()">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        {{modalBody}}
+      </div>
+      <div  class="modal-footer">
+       <button class="btn btn-primary" [disabled]="isDeleting" (click)="confirm()" > Ok</button>
+       <button class="btn btn-primary" [disabled]="isDeleting" (click)="cancel()"> No</button>
+      </div>
+    </ng-template>
+
+</div>
+
+
+
+
+
+
+  
